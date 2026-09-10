@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import logging
 import subprocess
 import telebot
@@ -8,7 +9,7 @@ from telebot import types
 # ================= সেটআপ =================
 API_TOKEN = '8483362473:AAFqMixrkiuGnwozELnBZyl9-neGmY6y4UI'       # @BotFather থেকে পাওয়া টোকেন দিন
 ADMIN_ID = 8289191009                    # আপনার আইডি
-FORCE_CHANNEL = "@yourchannel"           # আপনার চ্যানেল ইউজারনেম
+FORCE_CHANNEL = "@yonnel"           # আপনার চ্যানেল ইউজারনেম
 SUPPORT_USERNAME = "@sabbir2850"  # আপনার সাপোর্ট ইউজারনেম
 
 bot = telebot.TeleBot(API_TOKEN)
@@ -192,7 +193,7 @@ def show_host_bot_prompt(chat_id, user_id, callback_id=None):
         else:
             bot.send_message(chat_id, "❌ আপনার হোস্টিং এক্সেস নেই! আগে প্ল্যান কিনুন।")
         return
-    bot.send_message(chat_id, "📂 **আপনার পাইথন ফাইল (`.py`) টি আপলোড করুন:**\n\n*(ফাইলটি আপলোড করা মাত্রই আমাদের সার্ভার/অ্যাপ এনভায়রনমেন্টে অটোমেটিক রান হয়ে যাবে)*", parse_mode="Markdown")
+    bot.send_message(chat_id, "📂 **আপনার পাইথন ফাইল (`.py`) টি আপলোড করুন:**\n\n*(ফাইলটি আপলোড করার পর সিস্টেম অটো চেক করবে কোড রান হচ্ছে কি না)*", parse_mode="Markdown")
     user_states[user_id] = "waiting_for_bot_file"
 
 def show_support_info(chat_id):
@@ -204,11 +205,11 @@ def show_faq_info(chat_id):
     faq_text = (
         "ℹ️ **সাধারণ জিজ্ঞাসাসমূহ (FAQ):**\n\n"
         "❓ **১. কীভাবে বট হোস্ট করবেন?**\n"
-        "👉 প্রথমে 'Buy Plan' থেকে পেমেন্ট কমপ্লিট করুন। এডমিন এপ্রুভ করলে 'Host My Bot' অপশন চেপে আপনার Python (`.py`) ফাইলটি পাঠালে সরাসরি রান শুরু হয়ে যাবে।\n\n"
-        "❓ **২. আগের রানিং ফাইল কীভাবে বন্ধ করবেন?**\n"
-        "👉 নতুন ফাইল পাঠালে আগের রান করা বটটি অটো বন্ধ হয়ে নতুন ফাইলটি রান করবে।\n\n"
-        "❓ **৩. কোনো সমস্যা হলে কীভাবে যোগাযোগ করবেন?**\n"
-        "👉 '💬 Support' চাপলে এডমিনের ইউজারনেম পাওয়া যাবে।"
+        "👉 'Buy Plan' থেকে পেমেন্ট করুন। এপ্রুভ হলে 'Host My Bot' অপশনে গিয়ে `.py` ফাইল দিলে সরাসরি ব্যাকগ্রাউন্ডে রান শুরু হয়ে যাবে।\n\n"
+        "❓ **২. বট কাজ না করলে কী করবেন?**\n"
+        "👉 ফাইল পাঠানোর সাথে সাথেই আমাদের সিষ্টেম কোনো Error থাকলে আপনাকে সরাসরি এরর লগ পাঠিয়ে দেবে। সেই ভুল ঠিক করে আবার ফাইল দিন।\n\n"
+        "❓ **৩. সাপোর্ট কোথায় পাবেন?**\n"
+        "👉 '💬 Support' চেপে সরাসরি এডমিনের সাথে যোগাযোগ করতে পারবেন।"
     )
     bot.send_message(chat_id, faq_text, parse_mode="Markdown")
 
@@ -222,7 +223,7 @@ def show_admin_dashboard(chat_id):
     )
     bot.send_message(chat_id, "🛠️ **Admin Dashboard Panel**", reply_markup=markup, parse_mode="Markdown")
 
-# ================= ফাইল রিসিভ ও অ্যাপে অটোমেটিক ব্যাকগ্রাউন্ড রান =================
+# ================= ফাইল রিসিভ ও এরর চেকিং সহ ব্যাকগ্রাউন্ড রান =================
 @bot.message_handler(content_types=['document'])
 def handle_document(message):
     user_id = message.from_user.id
@@ -233,32 +234,63 @@ def handle_document(message):
             bot.reply_to(message, "❌ ভুল ফাইল! শুধুমাত্র পাইথন ফাইল (`.py`) আপলোড করুন।")
             return
         
-        # ১. ফাইলটি সার্ভারে ডাউনলোড করা
+        status_msg = bot.reply_to(message, "⏳ **আপনার ফাইল পরীক্ষা ও হোস্ট করা হচ্ছে...**", parse_mode="Markdown")
+
+        # ১. ফাইল সেভ করা
         file_info = bot.get_file(message.document.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         
         file_path = os.path.join(HOST_DIR, f"bot_{user_id}.py")
+        log_path = os.path.join(HOST_DIR, f"log_{user_id}.txt")
+
         with open(file_path, 'wb') as new_file:
             new_file.write(downloaded_file)
 
-        # ২. এই ইউজার যদি আগে কোনো ফাইল রান করে থাকে, তবে সেটি বন্ধ করা
+        # ২. আগের প্রসেস স্টপ করা
         if user_id in active_processes:
             try:
                 active_processes[user_id].terminate()
             except Exception:
                 pass
 
-        # ৩. অ্যাপের পাইথন পরিবেশ ব্যবহার করে ইউজারের ফাইলটিকে নতুন সাবপ্রসেস হিসেবে রান করা
+        # ৩. লগ ট্র্যাকিং সহ ব্যাকগ্রাউন্ডে প্রসেস রান করা
         try:
-            proc = subprocess.Popen([sys.executable, file_path])
-            active_processes[user_id] = proc
-            bot.reply_to(
-                message, 
-                "🚀 **অভিনন্দন! আপনার পাইথন বট ফাইলটি সফলভাবে আমাদের অ্যাপ হোস্টিং এনভায়রনমেন্টে রান করানো হয়েছে।**\n\nএটি ব্যাকগ্রাউন্ডে সবসময় লাইভ থাকবে।", 
-                parse_mode="Markdown"
+            log_file = open(log_path, "w")
+            proc = subprocess.Popen(
+                [sys.executable, file_path], 
+                stdout=log_file, 
+                stderr=log_file
             )
+            active_processes[user_id] = proc
+            
+            # প্রসেসটি স্ট্যাবল কিনা চেক করার জন্য ৩ সেকেন্ড অপেক্ষা
+            time.sleep(3)
+            
+            # প্রসেস যদি বন্ধ হয়ে গিয়ে থাকে (এরর এসেছে)
+            if proc.poll() is not None:
+                log_file.close()
+                with open(log_path, "r") as f:
+                    error_msg = f.read()
+                
+                err_snippet = error_msg[-800:] if error_msg else "Unknown Error (বট বন্ধ হয়ে গেছে)"
+                
+                bot.edit_message_text(
+                    f"❌ **আপনার বটটি রান করতে ব্যর্থ হয়েছে!**\n\n**এরর লগ (Error Log):**\n```text\n{err_snippet}\n```\n\n⚠️ আপনার পাইথন কোডের ভুল অথবা মিসিং লাইব্রেরি ঠিক করে পুনরায় ফাইল আপলোড করুন।", 
+                    message.chat.id, 
+                    status_msg.message_id, 
+                    parse_mode="Markdown"
+                )
+            else:
+                log_file.close()
+                bot.edit_message_text(
+                    "🚀 **অভিনন্দন! আপনার পাইথন বটটি সফলভাবে ব্যাকগ্রাউন্ডে চালু হয়েছে!**\n\nএখন আপনার বটের ইউজারনেমে গিয়ে `/start` দিয়ে চেক করতে পারেন।", 
+                    message.chat.id, 
+                    status_msg.message_id, 
+                    parse_mode="Markdown"
+                )
+
         except Exception as e:
-            bot.reply_to(message, f"❌ কোড রান করতে সমস্যা হয়েছে: `{str(e)}`", parse_mode="Markdown")
+            bot.edit_message_text(f"❌ সিস্টেম এরর: `{str(e)}`", message.chat.id, status_msg.message_id, parse_mode="Markdown")
 
         user_states[user_id] = None
 
@@ -268,7 +300,7 @@ def handle_all_messages(message):
     user_id = message.from_user.id
     text = message.text
 
-    # স্থায়ী রিপ্লাই কিবোর্ড বাটনের রেসপন্স
+    # স্থায়ী কিবোর্ড বাটন
     if text == "🛒 Buy Plan":
         show_buy_plan_menu(message.chat.id)
         return
@@ -337,13 +369,13 @@ def handle_all_messages(message):
                         active_processes[target_id].terminate()
                     except Exception:
                         pass
-                bot.reply_to(message, f"✅ User ID `{target_id}` এর হোস্টিং এক্সেস বন্ধ করা হয়েছে এবং তার প্রসেস স্টপ করা হয়েছে!", parse_mode="Markdown")
+                bot.reply_to(message, f"✅ User ID `{target_id}` এর হোস্টিং এক্সেস বন্ধ করা হয়েছে এবং প্রসেস স্টপ করা হয়েছে!", parse_mode="Markdown")
             else:
                 bot.reply_to(message, "❌ এই আইডি ডাটাবেজে পাওয়া যায়নি!")
         except Exception:
             bot.reply_to(message, "❌ সঠিক Numeric ID দিন!")
         user_states[user_id] = None
 
-# ================= পলান / রানার =================
+# ================= রানার =================
 if __name__ == "__main__":
     bot.infinity_polling(timeout=10, long_polling_timeout=5)
