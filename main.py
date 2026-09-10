@@ -9,16 +9,16 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 
-# ================= সেটআপ (এখানে তথ্য দিন) =================
-API_TOKEN = '8588997586:AAHEzsrXrzbeNZ9FzE3FV5G6XlGAU9UvvTA'   # @BotFather থেকে নেওয়া টোকেন
-ADMIN_ID = 8289191009                 # আপনার টেলিগ্রাম নিউমেরিক আইডি
-FORCE_CHANNEL = "@yourchannel"       # আপনার টেলিগ্রাম চ্যানেল ইউজারনেম
+# =================১. এখানে আপনার সঠিক তথ্য দিন =================
+API_TOKEN = '8483362473:AAFqMixrkiuGnwozELnBZyl9-neGmY6y4UI' # @BotFather থেকে পাওয়া বটের টোকেন দিন
+ADMIN_ID = 8289191009                # আপনার টেলিগ্রাম নিউমেরিক আইডি দিন (যেমন: 582312345)
+FORCE_CHANNEL = "@yourchannel"      # আপনার চ্যানেল ইউজারনেম (@ সহ)
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
-# ================= ডাটাবেজ ও ডিরেক্টরি =================
+# ================= ডাটাবেজ =================
 users_db = {}
 payment_numbers = {"bkash": "01700000000", "nagad": "01800000000"}
 auto_payment_gateways = {"bkash_api": "DISABLED", "nagad_api": "DISABLED"}
@@ -37,7 +37,7 @@ class Form(StatesGroup):
     waiting_for_manual_user_rem = State()
     waiting_for_bot_file = State()
 
-# ================= হেলপারস =================
+# ================= হেলপার =================
 async def check_force_sub(user_id: int) -> bool:
     if not FORCE_CHANNEL or FORCE_CHANNEL == "@yourchannel":
         return True
@@ -141,7 +141,7 @@ async def process_bot_file(message: Message, state: FSMContext):
         except Exception:
             pass
 
-    proc = subprocess.Popen(["python", file_path])
+    proc = subprocess.Popen(["python3", file_path])
     active_processes[u_id] = proc
     await message.answer("🚀 **আপনার ফাইল আপলোড করা হয়েছে এবং সার্ভারে রান করা হয়েছে!**")
     await state.clear()
@@ -158,7 +158,7 @@ async def send_support_msg(message: Message, state: FSMContext):
     await message.answer("✅ বার্তাটি এডমিনের কাছে সফলভাবে পাঠানো হয়েছে!")
     await state.clear()
 
-# ================= এডমিন প্যানেল (2FA ছাড়া সরাসরি এক্সেস) =================
+# ================= এডমিন প্যানেল =================
 @dp.callback_query(F.data == "admin_panel")
 async def admin_entry(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
@@ -174,7 +174,7 @@ async def show_admin_dashboard(message: Message):
     ]
     await message.answer("🛠️ **Admin Dashboard Panel**", reply_markup=InlineKeyboardMarkup(inline_keyboard=kb))
 
-# ম্যানুয়াল পেমেন্ট নাম্বার পরিবর্তন
+# ম্যানুয়াল পেমেন্ট নাম্বার
 @dp.callback_query(F.data == "admin_numbers")
 async def admin_numbers_menu(callback: CallbackQuery, state: FSMContext):
     msg = "📱 **বর্তমান নাম্বারসমূহ:**\n\n"
@@ -195,10 +195,10 @@ async def save_manual_number(message: Message, state: FSMContext):
         await message.answer("❌ ফরম্যাট ভুল! সঠিক নিয়ম: `bkash:01711223344`")
     await state.clear()
 
-# অটো পেমেন্ট API কাস্টমাইজেশন
+# অটো পেমেন্ট API
 @dp.callback_query(F.data == "admin_auto_pay")
 async def admin_auto_pay(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("⚙️ Auto Payment API কি (Key) পরিবর্তন করতে টাইপ করুন:\n`gateway:api_key`\n(যেমন: `bkash_api:SECRET_KEY_123`)", parse_mode="Markdown")
+    await callback.message.answer("⚙️ Auto Payment API কি (Key) সেট করতে লিখুন:\n`gateway:api_key`\n(যেমন: `bkash_api:SECRET_KEY_123`)", parse_mode="Markdown")
     await state.set_state(Form.waiting_for_auto_api)
 
 @dp.message(Form.waiting_for_auto_api)
@@ -264,8 +264,8 @@ async def approve_payment(callback: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("rej_"))
 async def reject_payment(callback: CallbackQuery):
-    u_id = callback.data.split("_")[1]
     try:
+        u_id = callback.data.split("_")[1]
         await bot.send_message(int(u_id), "❌ **পেমেন্ট তথ্য ভুল থাকায় বাতিল করা হয়েছে!**")
     except Exception:
         pass
