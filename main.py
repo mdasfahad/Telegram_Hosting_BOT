@@ -9,7 +9,7 @@ from telebot import types
 API_TOKEN = '8483362473:AAFqMixrkiuGnwozELnBZyl9-neGmY6y4UI'       # @BotFather থেকে পাওয়া টোকেন দিন
 ADMIN_ID = 8289191009                    # আপনার আইডি
 FORCE_CHANNEL = "@yourchannel"           # আপনার চ্যানেল ইউজারনেম
-SUPPORT_USERNAME = "@YourSupportHandle"  # আপনার সাপোর্ট ইউজারনেম
+SUPPORT_USERNAME = "@sabbir2850"  # আপনার সাপোর্ট ইউজারনেম
 
 bot = telebot.TeleBot(API_TOKEN)
 
