@@ -10,7 +10,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery, FSInputFile
 
 # ================= CONFIGURATION =================
-API_TOKEN = '8887776189:AAEDm4lDIiqkeLYSai3AqwwLhy-d94dAnnM'  # @BotFather থেকে নেওয়া টোকেন দিন
+API_TOKEN = '8887776189:AAH6qE_ZUY2wCOyNBf9toJlTA10oeeMGpQ4'  # @BotFather থেকে নেওয়া টোকেন দিন
 ADMIN_ID = 8289191009  # আপনার টেলিগ্রাম নিউমেরিক আইডি দিন
 FORCE_CHANNEL = "@yourchannelusername"  # চ্যানেলের ইউজারনেম (@ সহ)
 ADMIN_2FA_PIN = "1234"  # সিকিউরিটি পিন
