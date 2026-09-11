@@ -22,7 +22,7 @@ payment_numbers = {
 }
 # মার্চেন্ট বা অটো পেমেন্ট API কনফিগারেশন (যেমন: Rupantor Pay)
 MERCHANT_CONFIG = {
-    "api_key": "YOUR_MERCHANT_API_KEY",
+    "api_key": "https://rupantorpay.com/paymentlink/eyJ1aWQiOjY2NzksImJyYW5kX2lkIjoiNDE0MyIsImN1c3RvbWVyX2Ftb3VudCI6IjEwIn0",
     "payment_url": "https://rupantorpay.com/paymentlink/eyJ1aWQiOjY2NzksImJyYW5kX2lkIjoiNDE0MyIsImFjdGl2ZV9wYXltZW50cyI6eyJwZXJzb25hbCI6IjEifSwidHlwZSI6Im1haWwiLCJkb2xsYXJfcmF0ZSI6Ilx1MDllZFx1MDllZCIsImN1c3RvbWVyX2Ftb3VudCI6IjY4MCJ9" # আপনার মার্চেন্ট ইউআরএল
 }
 
